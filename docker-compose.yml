@@ -1,0 +1,83 @@
+services:
+  CPD1-es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.15
+    container_name: CPD1-node01
+    environment:
+      - cluster.name=CPD1
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - discovery.type=single-node  
+    user: elasticsearch  
+    command: /usr/share/elasticsearch/docker-entrypoint-es-plugins.sh
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+      - ./elasticsearch/docker-entrypoint-es-plugins.sh:/usr/share/elasticsearch/docker-entrypoint-es-plugins.sh
+    ports:
+      - 39201:9200
+      - 39301:9300
+    networks:
+      - esnet
+  CPD2-es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.15
+    container_name: CPD2-node01
+    environment:
+      - cluster.name=CPD2
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - discovery.type=single-node
+    user: elasticsearch  
+    command: /usr/share/elasticsearch/docker-entrypoint-es-plugins.sh
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata2:/usr/share/elasticsearch/data
+      - ./elasticsearch/docker-entrypoint-es-plugins.sh:/usr/share/elasticsearch/docker-entrypoint-es-plugins.sh
+    ports:
+      - 39202:9200
+      - 39302:9300
+    networks:
+      - esnet
+
+  liferay:
+    image: liferay/dxp:2024.q3.7
+    container_name: CPD1-lf01
+    depends_on:
+      - "postgres"
+      - "CPD1-es01"
+      - "CPD2-es01"
+    networks:
+      - esnet
+    ports:
+      - "8000:8000"
+      - "11311:11311"
+      - "8080:8080"
+    environment:
+      - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_lass_UPPERCASEN_ame=org.postgresql.Driver
+      - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:postgresql://postgres:5432/lportal
+      - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME=liferay
+      - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=passw0rd
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=passw0rd
+      - POSTGRES_USER=liferay
+      - POSTGRES_DB=lportal
+    volumes:
+        - ./data:/var/lib/postgresql/data
+    networks:
+      - esnet
+    ports:
+      - "5433:5432"
+volumes:
+  esdata1:
+    driver: local
+  esdata2:
+    driver: local
+networks:
+  esnet:
