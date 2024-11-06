@@ -62,6 +62,8 @@ services:
       - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:postgresql://postgres:5432/lportal
       - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME=liferay
       - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=passw0rd
+    volumes: 
+      - liferaydata:/opt/liferay/data/
   postgres:
     image: postgres
     environment:
@@ -69,15 +71,18 @@ services:
       - POSTGRES_USER=liferay
       - POSTGRES_DB=lportal
     volumes:
-        - ./data:/var/lib/postgresql/data
+        - ddbbdata:/var/lib/postgresql/data
     networks:
       - esnet
     ports:
       - "5433:5432"
 volumes:
   esdata1:
-    driver: local
   esdata2:
+    driver: local
+  liferaydata:
+    driver: local
+  ddbbdata:
     driver: local
 networks:
   esnet:
